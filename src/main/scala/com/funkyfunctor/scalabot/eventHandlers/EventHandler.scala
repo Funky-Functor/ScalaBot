@@ -1,11 +1,15 @@
 package com.funkyfunctor.scalabot.eventHandlers
 
-import com.funkyfunctor.scalabot.{EventHandlerRegisteringException, ScalaBotException}
-import com.github.philippheuer.events4j.core.EventManager
+import com.funkyfunctor.scalabot.{
+  EventHandlerRegisteringException,
+  EventHandlerRegistrar,
+  JavaEventHandler,
+  ScalaBotException
+}
 import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.chat.events.AbstractChannelEvent
 import zio.ZIO
-import zio.logging.{Logging, log}
+import zio.logging.Logging
 
 import java.util.function.Consumer
 import scala.reflect.ClassTag
@@ -17,21 +21,16 @@ object EventHandler {
   ): ZIO[Logging, ScalaBotException, Unit] = {
     for {
       eventManager <- ZIO { twitchClient.getEventManager }
-      _            <- ZIO.foreach_(eventHandlers) { registerHandler(eventManager, _) }
+      _ <- ZIO.foreach_(eventHandlers) { eventHandler =>
+        ZIO(EventHandlerRegistrar.registerHandlerToEventManager(eventManager, eventHandler))
+      }
     } yield ()
   }.mapError(error => EventHandlerRegisteringException(error))
-
-  private def registerHandler[E](
-      eventManager: EventManager,
-      handler: EventHandler[_]
-  ): ZIO[Logging, Throwable, Unit] = {
-    log.debug(s"Registering a handler for `${handler.associatedClass}`") *>
-      ZIO(eventManager.onEvent(handler.associatedClass, handler.consumer))
-  }
 }
 
-class EventHandler[E <: AbstractChannelEvent](consumerFunction: E => Unit)(implicit tag: ClassTag[E]) {
-  def associatedClass: Class[E] = tag.runtimeClass.asInstanceOf[Class[E]]
+class EventHandler[E <: AbstractChannelEvent](consumerFunction: E => Unit)(implicit tag: ClassTag[E])
+    extends JavaEventHandler[E] {
+  override def getConsumer: Consumer[E] = (t: E) => consumerFunction(t)
 
-  def consumer: Consumer[E] = (t: E) => consumerFunction(t)
+  override def getClazz(): Class[E] = tag.runtimeClass.asInstanceOf[Class[E]]
 }

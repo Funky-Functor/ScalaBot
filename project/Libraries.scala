@@ -8,15 +8,18 @@ object Versions {
   val typesafeConfigurationVersion = "1.4.1"
   val zioLoggingVersion            = "0.5.13"
 
+  //Java stuff
+  val lombokVersion = "1.18.20"
 }
 
 object Libraries {
   import Versions._
 
   val zio                   = "dev.zio"            %% "zio"           % zioVersion
-  val zioTest               = "dev.zio"            %% "zio-test"      % zioVersion % Test
+  val zioTest               = "dev.zio"            %% "zio-test"      % zioVersion    % Test
   val scalaReflection       = "org.scala-lang"      % "scala-reflect" % scalaVersion
   val twitch4j              = "com.github.twitch4j" % "twitch4j"      % twitch4jVersion
   val typesafeConfiguration = "com.typesafe"        % "config"        % typesafeConfigurationVersion
   val zioLogging            = "dev.zio"            %% "zio-logging"   % zioLoggingVersion
+  val lombok                = "org.projectlombok"   % "lombok"        % lombokVersion % Provided
 }

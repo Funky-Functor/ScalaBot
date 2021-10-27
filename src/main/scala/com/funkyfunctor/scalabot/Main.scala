@@ -2,7 +2,6 @@ package com.funkyfunctor.scalabot
 
 import com.funkyfunctor.scalabot.Configuration.HasConfiguration
 import com.funkyfunctor.scalabot.eventHandlers.EventHandler
-import com.github.twitch4j.chat.events.AbstractChannelEvent
 import com.github.twitch4j.chat.events.channel.{DonationEvent, FollowEvent}
 import zio._
 import zio.logging._
@@ -34,12 +33,11 @@ object Main extends App {
   def startBot(): ScalabotEnvironment[Unit] = {
     for {
       client <- ScalabotTwitchClient.createTwitchClient()
-      eventHandlers: Seq[EventHandler[_]] = Seq(demoEventHandler, otherDemoEventHandler)
-      _      <- EventHandler.registerHandlers(client, eventHandlers) //TODO Fill with event handlers
+      _      <- EventHandler.registerHandlers(client, Seq(demoEventHandler, otherDemoEventHandler))
     } yield ()
   }
 
-  lazy val demoEventHandler: EventHandler[DonationEvent] = new EventHandler[DonationEvent]({ event: DonationEvent =>
+  lazy val demoEventHandler: EventHandler[DonationEvent] = new EventHandler[DonationEvent]({ event =>
     val user        = event.getUser.getName
     val amount      = event.getAmount
     val source      = event.getSource

@@ -13,7 +13,10 @@ lazy val root = (project in file("."))
       Libraries.zioLogging,
       Libraries.scalaReflection,
 
-        //Tests
+      //Java
+      Libraries.lombok,
+
+      //Tests
       Libraries.zioTest
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
