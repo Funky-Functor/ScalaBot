@@ -1,4 +1,4 @@
-package com.funkyfunctor.scalabot
+package com.funkyfunctor.scalabot.twitch
 
 import com.typesafe.config.ConfigFactory
 import zio._
@@ -28,4 +28,25 @@ object Configuration {
   }
 }
 
-case class Configuration private (twitchClientId: String, twitchClientSecret: String, irc: String) {}
+case class Configuration private (twitchClientId: String, twitchClientSecret: String, irc: String) {
+
+  private def safelyDisplay(str: String, visibleEndCharacters: Int = 4): String = {
+    val strSize = str.size
+
+    if (strSize < visibleEndCharacters)
+      str
+    else {
+      val begin = str.substring(0, strSize - visibleEndCharacters).replaceAll(".", "X")
+      val end   = str.substring(strSize - visibleEndCharacters)
+
+      begin + end
+    }
+  }
+
+  override def toString: String =
+    s"""Configuration(
+      |  irc:                '${safelyDisplay(irc)}'
+      |  twitchClientId:     '$twitchClientId'
+      |  twitchClientSecret: '${safelyDisplay(twitchClientSecret)}'
+      |)""".stripMargin
+}

@@ -1,6 +1,6 @@
-package com.funkyfunctor.scalabot
+package com.funkyfunctor.scalabot.twitch
 
-import com.funkyfunctor.scalabot.Configuration.HasConfiguration
+import com.funkyfunctor.scalabot.twitch.Configuration.HasConfiguration
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential
 import com.github.twitch4j.{TwitchClient, TwitchClientBuilder}
 import zio.ZIO
@@ -47,4 +47,8 @@ object ScalabotTwitchClient {
       }.mapError(throwable => ConfigurationLoadingException(throwable))
     }
   }
+
+  def sendMessage(client: TwitchClient, message: String, channel: String): ZIO[HasConfiguration, ScalaBotException, Boolean] = ZIO{
+    client.getChat.sendMessage(channel, message)
+  }.mapError(error => ChatMessageSendingException(channel, error))
 }
