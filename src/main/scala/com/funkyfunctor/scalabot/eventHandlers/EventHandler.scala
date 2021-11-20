@@ -1,5 +1,6 @@
 package com.funkyfunctor.scalabot.eventHandlers
 
+import com.funkyfunctor.scalabot.twitch.{EventHandlerRegistrar, JavaEventHandler}
 import com.funkyfunctor.scalabot.{EventHandlerRegisteringException, ScalaBotException}
 import com.github.philippheuer.events4j.core.EventManager
 import com.github.twitch4j.TwitchClient
@@ -26,11 +27,12 @@ object EventHandler {
       handler: EventHandler[_]
   ): ZIO[Logging, Throwable, Unit] = {
     log.debug(s"Registering a handler for `${handler.associatedClass}`") *>
-      ZIO(eventManager.onEvent(handler.associatedClass, handler.consumer))
+      ZIO(EventHandlerRegistrar.registerEventHandler(eventManager, handler))
   }
 }
 
-class EventHandler[E <: AbstractChannelEvent](consumerFunction: E => Unit)(implicit tag: ClassTag[E]) {
+class EventHandler[E <: AbstractChannelEvent](consumerFunction: E => Unit)(implicit tag: ClassTag[E])
+    extends JavaEventHandler[E] {
   def associatedClass: Class[E] = tag.runtimeClass.asInstanceOf[Class[E]]
 
   def consumer: Consumer[E] = (t: E) => consumerFunction(t)

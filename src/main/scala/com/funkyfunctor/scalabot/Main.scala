@@ -1,9 +1,7 @@
 package com.funkyfunctor.scalabot
 
 import com.funkyfunctor.scalabot.Configuration.HasConfiguration
-import com.funkyfunctor.scalabot.eventHandlers.EventHandler
-import com.github.twitch4j.chat.events.AbstractChannelEvent
-import com.github.twitch4j.chat.events.channel.{DonationEvent, FollowEvent}
+import com.funkyfunctor.scalabot.eventHandlers.{EventHandler, MessageReceivedHandler}
 import zio._
 import zio.logging._
 
@@ -18,11 +16,7 @@ object Main extends App {
       format = LogFormat.ColoredLogFormat()
     ) >>> Logging.withRootLoggerName("com.funkyfunctor.scalabot")
 
-    (startBot() *> {
-      ZIO.accessM { hasConf: HasConfiguration =>
-        log.info(s"My configuration is ${hasConf.get}")
-      }
-    })
+    startBot()
       .provideCustomLayer(configuration ++ logging)
       .fold(
         _ => System.out.println("ERROR"),
@@ -34,28 +28,31 @@ object Main extends App {
   def startBot(): ScalabotEnvironment[Unit] = {
     for {
       client <- ScalabotTwitchClient.createTwitchClient()
-      eventHandlers: Seq[EventHandler[_]] = Seq(demoEventHandler, otherDemoEventHandler)
-      _      <- EventHandler.registerHandlers(client, eventHandlers) //TODO Fill with event handlers
+      _      <- ScalabotTwitchClient.joinDefaultChannel(client)
+      _      <- EventHandler.registerHandlers(client, Seq(MessageReceivedHandler))
+      _ <- ZIO.accessM { hasConf: HasConfiguration =>
+        log.info(s"My configuration is ${hasConf.get}")
+      }
     } yield ()
   }
-
-  lazy val demoEventHandler: EventHandler[DonationEvent] = new EventHandler[DonationEvent]({ event: DonationEvent =>
-    val user        = event.getUser.getName
-    val amount      = event.getAmount
-    val source      = event.getSource
-    val channelName = event.getChannel.getName
-
-    val message = s"$user just donated $amount using $source!"
-
-    event.getTwitchChat.sendMessage(channelName, message)
-  })
-
-  lazy val otherDemoEventHandler: EventHandler[FollowEvent] = new EventHandler[FollowEvent]({ event =>
-    val user        = event.getUser.getName
-    val channelName = event.getChannel.getName
-
-    val message = s"$user is now following $channelName!"
-
-    event.getTwitchChat.sendMessage(channelName, message);
-  })
+//
+//  lazy val demoEventHandler: EventHandler[DonationEvent] = new EventHandler[DonationEvent]({ event: DonationEvent =>
+//    val user        = event.getUser.getName
+//    val amount      = event.getAmount
+//    val source      = event.getSource
+//    val channelName = event.getChannel.getName
+//
+//    val message = s"$user just donated $amount using $source!"
+//
+//    event.getTwitchChat.sendMessage(channelName, message)
+//  })
+//
+//  lazy val otherDemoEventHandler: EventHandler[FollowEvent] = new EventHandler[FollowEvent]({ event =>
+//    val user        = event.getUser.getName
+//    val channelName = event.getChannel.getName
+//
+//    val message = s"$user is now following $channelName!"
+//
+//    event.getTwitchChat.sendMessage(channelName, message);
+//  })
 }

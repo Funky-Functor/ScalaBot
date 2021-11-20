@@ -47,4 +47,12 @@ object ScalabotTwitchClient {
       }.mapError(throwable => ConfigurationLoadingException(throwable))
     }
   }
+
+  def joinDefaultChannel(client: TwitchClient): ZIO[HasConfiguration, ScalaBotException, Unit] = {
+    ZIO.accessM { hasConf =>
+      val conf = hasConf.get[Configuration]
+
+      ZIO(client.getChat.joinChannel(conf.defaultChannel)).mapError(error => ChatException(error))
+    }
+  }
 }
