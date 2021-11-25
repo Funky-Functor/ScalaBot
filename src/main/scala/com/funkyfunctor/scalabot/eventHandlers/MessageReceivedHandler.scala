@@ -8,7 +8,7 @@ import scala.jdk.javaapi.CollectionConverters
 object MessageReceivedHandler
     extends EventHandler[ChannelMessageEvent]({ event =>
       val permissions = CollectionConverters.asScala(event.getPermissions)
-      //event.
+      // event.
       val user      = event.getUser.getName
       val msg       = event.getMessage
       val timestamp = System.currentTimeMillis()
@@ -16,11 +16,9 @@ object MessageReceivedHandler
       System.out.println(s"$timestamp - [$user ($permissions) says] '$msg'")
 
       val commandContext = Map(
-        CommandContext.CHANNEL_KEY -> event.getChannel.getName,
+        CommandContext.CHANNEL_KEY     -> event.getChannel.getName,
         CommandContext.CHAT_CLIENT_KEY -> event.getTwitchChat
       )
 
-      Command.toCommand(msg, commandContext).foreach(
-        command => command.run()
-      )
+      Command.toCommand(msg, commandContext).foreach(command => command.run())
     })
