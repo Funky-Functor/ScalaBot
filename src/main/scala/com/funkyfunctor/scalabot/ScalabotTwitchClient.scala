@@ -5,8 +5,8 @@ import com.github.philippheuer.credentialmanager.domain.OAuth2Credential
 import com.github.twitch4j.{TwitchClient, TwitchClientBuilder}
 import zio.ZIO
 
-object ScalabotTwitchClient {
-  def createTwitchClient(): ZIO[HasConfiguration, ScalaBotException, TwitchClient] = {
+object ScalabotTwitchClient:
+  def createTwitchClient(): ZIO[HasConfiguration, ScalaBotException, TwitchClient] =
     ZIO.accessM { hasConf =>
       val conf = hasConf.get[Configuration]
 
@@ -32,7 +32,7 @@ object ScalabotTwitchClient {
            * GraphQL has a limited support
            * Don't expect a bunch of features enabling it
            */
-          //.withEnableGraphQL(true)
+          // .withEnableGraphQL(true)
           /*
            * Kraken is going to be deprecated
            * see : https://dev.twitch.tv/docs/v5/#which-api-version-can-you-use
@@ -46,13 +46,10 @@ object ScalabotTwitchClient {
           .build();
       }.mapError(throwable => ConfigurationLoadingException(throwable))
     }
-  }
 
-  def joinDefaultChannel(client: TwitchClient): ZIO[HasConfiguration, ScalaBotException, Unit] = {
+  def joinDefaultChannel(client: TwitchClient): ZIO[HasConfiguration, ScalaBotException, Unit] =
     ZIO.accessM { hasConf =>
       val conf = hasConf.get[Configuration]
 
       ZIO(client.getChat.joinChannel(conf.defaultChannel)).mapError(error => ChatException(error))
     }
-  }
-}

@@ -21,6 +21,24 @@ Docker / maintainer := "chris@funky-functor.com"
 dockerBaseImage     := "arm64v8/openjdk:17-jdk-slim-buster" //Used for Raspberry Pi deployment - Use "openjdk:17-jdk-alpine" for regular Docker deployment
 dockerUpdateLatest  := true
 
+/* Scala compiler config */
+scalacOptions ++= Seq(
+  "-encoding", "utf8", // Option and arguments on same line
+  "-Xfatal-warnings",  // New lines for each options
+  "-deprecation",
+  "-unchecked",
+  "-language:implicitConversions",
+  "-language:higherKinds",
+  "-language:existentials",
+  "-language:postfixOps",
+
+  //Scala 3 specific
+//  "-source:3.0-migration",
+//  "-rewrite",
+//  "-indent",
+//  "-new-syntax"
+)
+
 /* Project-specific config */
 lazy val root = (project in file("."))
   .settings(
@@ -30,7 +48,7 @@ lazy val root = (project in file("."))
       Libraries.twitch4j,
       Libraries.typesafeConfiguration,
       Libraries.zioLogging,
-      Libraries.scalaReflection,
+      //Libraries.scalaReflection,
 
       //Tests
       Libraries.zioTest

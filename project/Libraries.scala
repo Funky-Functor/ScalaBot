@@ -1,7 +1,7 @@
 import sbt._
 
 object Versions {
-  val scalaVersion = "2.13.6"
+  val scalaVersion = "3.1.0"
 
   val zioVersion                   = "1.0.12"
   val twitch4jVersion              = "1.5.0"

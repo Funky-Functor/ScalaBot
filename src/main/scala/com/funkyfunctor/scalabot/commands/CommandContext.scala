@@ -1,6 +1,5 @@
 package com.funkyfunctor.scalabot.commands
 
-object CommandContext {
+object CommandContext:
   val CHAT_CLIENT_KEY = "TwitchChat"
-  val CHANNEL_KEY = "channel"
-}
+  val CHANNEL_KEY     = "channel"

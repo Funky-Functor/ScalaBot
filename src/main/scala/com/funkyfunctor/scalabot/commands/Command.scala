@@ -1,6 +1,6 @@
 package com.funkyfunctor.scalabot.commands
 
-object Command {
+object Command:
   private val commandsMap: Map[String, CommandConstructor] = Map(
     PingConstructor.getTuple
   )
@@ -8,20 +8,16 @@ object Command {
   def toCommand(
       commandString: String,
       context: Map[String, Object]
-  ): Option[Command] = {
-    if (!commandString.startsWith("!"))
-      None
-    else {
+  ): Option[Command] =
+    if !commandString.startsWith("!") then None
+    else
       // "!ff_ping     test" => Seq("!ff_ping", "test")
-      val splitString: Seq[String] = commandString.split("""\s""")
+      val splitString: Seq[String] = commandString.split("""\s""").toIndexedSeq
 
-      for {
+      for
         constructor <- commandsMap.get(splitString.head)
         command     <- constructor.getCommand(splitString.tail, context)
-      } yield command
-    }
-  }
-}
+      yield command
 
 trait CommandConstructor { self =>
   def commandKey: String
@@ -30,6 +26,5 @@ trait CommandConstructor { self =>
   def getTuple: (String, CommandConstructor) = commandKey -> self
 }
 
-trait Command {
+trait Command:
   def run(): Unit
-}
