@@ -39,6 +39,8 @@ scalacOptions ++= Seq(
 //  "-new-syntax"
 )
 
+testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+
 /* Project-specific config */
 lazy val root = (project in file("."))
   .settings(
@@ -48,10 +50,10 @@ lazy val root = (project in file("."))
       Libraries.twitch4j,
       Libraries.typesafeConfiguration,
       Libraries.zioLogging,
-      //Libraries.scalaReflection,
+      Libraries.scalaReflection,
 
       //Tests
-      Libraries.zioTest
-    ),
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+      Libraries.zioTest,
+      Libraries.zioTestSbt
+    )
   )

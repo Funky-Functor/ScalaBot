@@ -1,9 +1,9 @@
 package com.funkyfunctor.scalabot
 
 import com.typesafe.config.ConfigFactory
-import zio.*
+import zio._
 
-object Configuration:
+object Configuration {
   type HasConfiguration = Has[Configuration]
 
   val IRC_KEY                       = "irc"
@@ -12,7 +12,7 @@ object Configuration:
   val TWITCH_CLIENT_SECRET_KEY      = "secret"
   val TWITCH_CLIENT_DEFAULT_CHANNEL = "channel"
 
-  def retrieveConfiguration(): ZLayer[Any, ScalaBotException, HasConfiguration] =
+  def retrieveConfiguration(): ZLayer[Any, ScalaBotException, HasConfiguration] = {
     ZIO {
       val conf = ConfigFactory.load()
 
@@ -31,26 +31,28 @@ object Configuration:
     }
       .mapError(error => ConfigurationLoadingException(error))
       .toLayer
-  end retrieveConfiguration
+  }
 
-  def partlyHide(str: String, charactersKeptAtTheEnd: Int = 3): String =
-    val strSize = str.size;
+  def partlyHide(str: String, charactersKeptAtTheEnd: Int = 3): String = {
+    val strSize = str.length;
 
-    if strSize <= charactersKeptAtTheEnd then str
-    else
+    if (strSize <= charactersKeptAtTheEnd) str
+    else {
       val limit = strSize - charactersKeptAtTheEnd
       val begin = str.substring(0, limit).replaceAll(".", "X")
       val end   = str.substring(limit)
 
       begin + end
-end Configuration
+    }
+  }
+}
 
 case class Configuration private (
     twitchClientId: String,
     twitchClientSecret: String,
     irc: String,
     defaultChannel: String
-):
+) {
   override def toString: String =
     s"""Configuration(
       | twitchClientId:     ${Configuration.partlyHide(twitchClientId)}
@@ -58,4 +60,4 @@ case class Configuration private (
       | irc:                ${Configuration.partlyHide(irc)}
       | defaultChannel:     $defaultChannel
       |)""".stripMargin
-end Configuration
+}
