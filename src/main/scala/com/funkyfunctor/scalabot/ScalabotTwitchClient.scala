@@ -5,7 +5,7 @@ import com.github.philippheuer.credentialmanager.domain.OAuth2Credential
 import com.github.twitch4j.{TwitchClient, TwitchClientBuilder}
 import zio.ZIO
 
-object ScalabotTwitchClient:
+object ScalabotTwitchClient {
   def createTwitchClient(): ZIO[HasConfiguration, ScalaBotException, TwitchClient] =
     ZIO.accessM { hasConf =>
       val conf = hasConf.get[Configuration]
@@ -53,3 +53,4 @@ object ScalabotTwitchClient:
 
       ZIO(client.getChat.joinChannel(conf.defaultChannel)).mapError(error => ChatException(error))
     }
+}
