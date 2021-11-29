@@ -4,7 +4,7 @@ import com.funkyfunctor.scalabot.commands.Permissions._
 import zio.test._
 
 object PermissionsTest extends DefaultRunnableSpec {
-  override def spec: ZSpec[Environment, Failure] = suite("PermissionsTest")(
+  override def spec: ZSpec[Environment, Failure] = suite("Permissions")(
     canAccessTests
   )
 

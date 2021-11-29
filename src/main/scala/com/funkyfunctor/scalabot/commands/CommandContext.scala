@@ -6,7 +6,6 @@ object CommandContext {
 }
 
 case class CommandContext(
-    envVariables: Map[String, Any],
-    userVariables: Map[String, Any],
-    date: Long
+    envVariables: Map[String, Any] = Map.empty,
+    userVariables: Map[String, Any] = Map.empty
 )

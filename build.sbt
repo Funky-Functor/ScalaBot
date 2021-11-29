@@ -23,8 +23,8 @@ dockerUpdateLatest  := true
 
 /* Scala compiler config */
 scalacOptions ++= Seq(
-  "-encoding", "utf8", // Option and arguments on same line
-  "-Xfatal-warnings",  // New lines for each options
+  "-encoding", "utf8",
+  //"-Xfatal-warnings",
   "-deprecation",
   "-unchecked",
   "-language:implicitConversions",
@@ -51,6 +51,7 @@ lazy val root = (project in file("."))
       Libraries.typesafeConfiguration,
       Libraries.zioLogging,
       Libraries.scalaReflection,
+      Libraries.fastParse,
 
       //Tests
       Libraries.zioTest,
