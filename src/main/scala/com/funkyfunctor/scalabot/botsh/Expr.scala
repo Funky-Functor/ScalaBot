@@ -8,11 +8,12 @@ object Expr {
     lazy val numericValue: BigDecimal = BigDecimal(nbStr)
   }
   case class Ident(name: String) extends Expr
-  case class BinaryOperator(head: Expr, tail: Seq[(String, Expr)]) extends Expr
-  case class Dict(pairs: Map[String, Expr]) extends Expr
+  case class AdditionSubtraction(head: Expr, tail: Seq[(String, Expr)]) extends Expr
+  case class MultiplicationDivision(head: Expr, tail: Seq[(String, Expr)]) extends Expr
   case class Val(name: String, assigned: Expr, body: Option[Expr]) extends Expr
   case class Func(argNames: Seq[String], body: Expr) extends Expr
   case class Call(expr: Expr, args: Seq[Expr]) extends Expr
+  case class Condition(condition: Expr, ifTrue: Expr, ifFalse: Option[Expr]) extends Expr
 
   def toStr(str: String): Str = {
     val trimmed = str.trim

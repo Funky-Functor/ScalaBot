@@ -78,7 +78,9 @@ object BotShellEvaluatorTest extends DefaultRunnableSpec {
     test01_08,
     test01_09,
     test01_10,
-    test01_11
+    test01_11,
+    test01_12,
+    test01_13
   )
 
   private lazy val test01_01 = test("Parsing text") {
@@ -189,5 +191,29 @@ object BotShellEvaluatorTest extends DefaultRunnableSpec {
     testExpressionEvaluation("val t = 1; val u = 1; t / u", "Str(1)") &&
     testExpressionEvaluation("val f1 = function () 1; val f2 = f1(); f1() / f2", "Str(1)") &&
     testExpressionEvaluation("val f1 = function () 1; val f2 = function (a) a; f1() / f2(1)", "Str(1)")
+  }
+
+  private lazy val test01_12 = test("Evaluating operator precedence") {
+    testExpressionEvaluation("1 + 2 * 3 / 6", "Str(2)")
+  }
+
+  private lazy val test01_13 = test("Evaluating conditions") {
+    testExpressionEvaluation("if (\"true\") then 1 else 0;", "Str(1)") &&
+    testExpressionEvaluation("if (\"false\") then 1 else 0;", "Str(0)") &&
+    testExpressionEvaluation("if (\"true\") then 1;", "Str(1)") &&
+    testExpressionEvaluation("if (\"false\") then 1;", "Str()") &&
+    testExpressionEvaluation("if (true) then 1 else 0;", "Str(1)") &&
+    testExpressionEvaluation("if (false) then 1 else 0;", "Str(0)") &&
+    testExpressionEvaluation("if (1) then 1 else 0;", "Str(1)") &&
+    testExpressionEvaluation("if (0) then 1 else 0;", "Str(0)") &&
+    testExpressionEvaluation("if (\"tr\" + \"ue\") then 1 else 0;", "Str(1)") &&
+    testExpressionEvaluation("if (\"fal\" + \"se\") then 1 else 0;", "Str(0)") &&
+    testExpressionEvaluation("if (true) then 1 + 0 else 0 + 2;", "Str(1)") &&
+    testExpressionEvaluation("if (false) then 1 + 0 else 0 + 2;", "Str(2)") &&
+    testExpressionEvaluation("if (if (true) then 1;) then 2 else 3;", "Str(2)") &&
+    testExpressionEvaluation("if (true) then if (true) then 1; else 0;", "Str(1)") &&
+    testExpressionEvaluation("if (true) then if (false) then 0 else 1; else 0;", "Str(1)") &&
+    testExpressionEvaluation("if (false) then 0 else if (true) then 1;;", "Str(1)") &&
+    testExpressionEvaluation("if (false) then 0 else if (false) then 0 else 1;;", "Str(1)")
   }
 }

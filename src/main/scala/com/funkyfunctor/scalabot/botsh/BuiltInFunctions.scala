@@ -1,5 +1,7 @@
 package com.funkyfunctor.scalabot.botsh
 
+import com.funkyfunctor.scalabot.botsh.Value.function
+
 import java.text.SimpleDateFormat
 import java.util.{Date, TimeZone}
 import scala.util.Try
@@ -19,22 +21,40 @@ case class BuiltInFunctions private (
     defaultTimezone: String = BuiltInFunctions.defaultTimezone
 ) {
 
-  val builtInFunctionsMap: Map[String, Seq[String] => String] = Map(
-    BuiltInFunctions.nowName               -> now,
-    BuiltInFunctions.defaultDateFormatName -> getDefaultDateFormat,
-    BuiltInFunctions.defaultTimezoneName   -> getDefaultTimezone
-  )
+//  val builtInFunctionsMap: Map[String, function] = Map(
+//    BuiltInFunctions.nowName               -> now(_),
+//    BuiltInFunctions.defaultDateFormatName -> getDefaultDateFormat(_),
+//    BuiltInFunctions.defaultTimezoneName   -> getDefaultTimezone(_)
+//  ).view.mapValues(Value.toFunc).toMap
 
-  def getDefaultDateFormat(args: Seq[String]): String = {
-    defaultDateFormat
+  def checkArgumentNumber(args: Seq[String], size: Int = 0)(f: Seq[String] => Try[String]): Try[String] = {
+    checkArgumentNumber(args, size, size)(f)
   }
 
-  def getDefaultTimezone(args: Seq[String]): String = {
-    defaultTimezone
+  def checkArgumentNumber(args: Seq[String], min: Int, max: Int)(f: Seq[String] => Try[String]): Try[String] = {
+    val l = args.length
+    if (l >= min && l <= max)
+      f(args)
+    else
+      Try {
+        val expString =
+          if (min != max)
+            s"(expected min size: $min, expected max size: $max)"
+          else s"(expected size: $min)"
+        throw new Exception(s"Incorrect number of arguments: $l $expString")
+      }
   }
 
-  def now(args: Seq[String]): String = {
-    val (format, timezone) = args match {
+  def getDefaultDateFormat(args: Seq[String]): Try[String] = {
+    checkArgumentNumber(args)(_ => Try(defaultDateFormat))
+  }
+
+  def getDefaultTimezone(args: Seq[String]): Try[String] = {
+    checkArgumentNumber(args)(_ => Try(defaultTimezone))
+  }
+
+  def now(args: Seq[String]): Try[String] = checkArgumentNumber(args, 0, 2) { arguments =>
+    val (format, timezone) = arguments match {
       case Nil                 => (defaultDateFormat, defaultTimezone)
       case format :: Nil       => (format, defaultTimezone)
       case format :: zone :: _ => (format, zone)
@@ -50,6 +70,6 @@ case class BuiltInFunctions private (
       df
     }
 
-    formatter.format(new Date())
+    Try(formatter.format(new Date()))
   }
 }
