@@ -1,6 +1,6 @@
 package com.funkyfunctor.scalabot.botsh
 
-import com.funkyfunctor.scalabot.botsh.Value.function
+import com.funkyfunctor.scalabot.botsh.Value.isStringTrue
 
 import java.text.SimpleDateFormat
 import java.util.{Date, TimeZone}
@@ -8,24 +8,28 @@ import scala.util.Try
 
 object BuiltInFunctions {
   // TODO Load it from config
-  val defaultDateFormat = "dd-MM-yyyy HH:mm:SS z"
+  val defaultDateFormat = "dd-MM-yyyy HH:mm:ss z"
   val defaultTimezone   = "UTC"
 
   val nowName               = "now"
   val defaultDateFormatName = "defaultDateFormat"
   val defaultTimezoneName   = "defaultTimezone"
+
+  val ifFunctionName = "iff"
+  val helloWorldName = "helloWorld"
 }
 
-case class BuiltInFunctions private (
+case class BuiltInFunctions(
     defaultDateFormat: String = BuiltInFunctions.defaultDateFormat,
     defaultTimezone: String = BuiltInFunctions.defaultTimezone
 ) {
 
-//  val builtInFunctionsMap: Map[String, function] = Map(
-//    BuiltInFunctions.nowName               -> now(_),
-//    BuiltInFunctions.defaultDateFormatName -> getDefaultDateFormat(_),
-//    BuiltInFunctions.defaultTimezoneName   -> getDefaultTimezone(_)
-//  ).view.mapValues(Value.toFunc).toMap
+  val builtInFunctionsMap: Map[String, Seq[String] => Try[String]] = Map(
+    BuiltInFunctions.nowName               -> now,
+    BuiltInFunctions.defaultDateFormatName -> getDefaultDateFormat,
+    BuiltInFunctions.defaultTimezoneName   -> getDefaultTimezone,
+    BuiltInFunctions.ifFunctionName        -> ifFunction
+  )
 
   def checkArgumentNumber(args: Seq[String], size: Int = 0)(f: Seq[String] => Try[String]): Try[String] = {
     checkArgumentNumber(args, size, size)(f)
@@ -43,6 +47,20 @@ case class BuiltInFunctions private (
           else s"(expected size: $min)"
         throw new Exception(s"Incorrect number of arguments: $l $expString")
       }
+  }
+
+  def ifFunction(args: Seq[String]): Try[String] = {
+    checkArgumentNumber(args, 2, 3) { seq =>
+      val (condition, ifTrue, ifFalse) = seq match {
+        case cond :: ifTrue :: Nil          => (cond, ifTrue, "")
+        case cond :: ifTrue :: ifFalse :: _ => (cond, ifTrue, ifFalse)
+        case _                              => throw new Exception(s"Incorrect number of arguments: ${seq.length}")
+      }
+
+      if (isStringTrue(condition))
+        Try(ifTrue)
+      else Try(ifFalse)
+    }
   }
 
   def getDefaultDateFormat(args: Seq[String]): Try[String] = {

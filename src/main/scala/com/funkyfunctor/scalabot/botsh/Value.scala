@@ -23,7 +23,12 @@ object Value {
     s => handleResult(f(toStrings(s)))
   }
 
-  def evaluate(expr: Expr, scope: Map[String, Value]): Value = expr match {
+  lazy val builtInFunctions: Map[String, Value] = new BuiltInFunctions().builtInFunctionsMap.map { case (key, value) =>
+    val function = toFunc(value)
+    key -> Func(function)
+  }
+
+  def evaluate(expr: Expr, scope: Map[String, Value] = builtInFunctions): Value = expr match {
     case Expr.Str(s) => Value.Str(s)
     // case Expr.Dict(kvs) => Value.Dict(kvs.map { case (k, v) => (k, evaluate(v, scope)) })
     case Expr.AdditionSubtraction(head, tail) =>
@@ -55,7 +60,7 @@ object Value {
     case Expr.Condition(condExpr, ifTrue, ifFalse) =>
       evaluate(condExpr, scope) match {
         case Str(condStr) =>
-          if (condStr.equalsIgnoreCase("true") || strToBigDecimal(condStr).exists(_ != 0)) {
+          if (isStringTrue(condStr)) {
             evaluate(ifTrue, scope)
           } else {
             ifFalse.map(evaluate(_, scope)).getOrElse(Str(""))
@@ -63,6 +68,9 @@ object Value {
         case otherUnexpectedValue => otherUnexpectedValue
       }
   }
+
+  def isStringTrue(condStr: String): Boolean =
+    condStr.equalsIgnoreCase("true") || strToBigDecimal(condStr).exists(_ != 0)
 
   def strToBigDecimal(str: String): Option[BigDecimal] = Try { BigDecimal(str) }.toOption
 
