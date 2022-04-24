@@ -1,27 +1,24 @@
 package com.funkyfunctor.scalabot
 
 import com.funkyfunctor.scalabot.Configuration.HasConfiguration
+import com.funkyfunctor.scalabot.CustomLayer.{DefaultCustomLayer, ScalaBotSpecificContext}
 import com.funkyfunctor.scalabot.eventHandlers.{EventHandler, MessageReceivedHandler}
 import zio._
+import zio.console.putStrLn
 import zio.logging._
 
 object Main extends App {
-  type ScalabotEnvironment[A] = ZIO[HasConfiguration with Logging, ScalaBotException, A]
+  type ScalaBotContext         = ScalaBotSpecificContext with ZEnv
+  type ScalabotEnvironment[A]  = ZIO[ScalaBotContext, ScalaBotException, A]
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
-    // Dependency injection
-    val configuration: ZLayer[ZEnv, ScalaBotException, HasConfiguration] = Configuration.retrieveConfiguration()
-    val logging: ZLayer[ZEnv, Nothing, Logging] = Logging.console(
-      logLevel = LogLevel.Info,
-      format = LogFormat.ColoredLogFormat()
-    ) >>> Logging.withRootLoggerName("com.funkyfunctor.scalabot")
 
     startBot()
-      .provideCustomLayer(configuration ++ logging)
       .fold(
-        _ => System.out.println("ERROR"),
-        _ => System.out.println("SUCCESS")
+        _ => putStrLn("ERROR"),
+        _ => putStrLn("SUCCESS")
       )
+      .provideCustomLayer(DefaultCustomLayer.fullCustomLayer)
       .exitCode
   }
 
@@ -29,7 +26,7 @@ object Main extends App {
     for {
       client <- ScalabotTwitchClient.createTwitchClient()
       _      <- ScalabotTwitchClient.joinDefaultChannel(client)
-      _      <- EventHandler.registerHandlers(client, Seq(MessageReceivedHandler))
+      _ <- EventHandler.registerHandlers(client, Seq(MessageReceivedHandler.eventHandler))
       _ <- ZIO.accessM { (hasConf: HasConfiguration) =>
         log.info(s"My configuration is ${hasConf.get}")
       }

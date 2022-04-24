@@ -14,7 +14,7 @@ object BotShellEvaluatorTest extends DefaultRunnableSpec {
   val variableNameGen: Gen[Random with Sized, String] = for {
     firstCharacter <- Gen.alphaChar
     remainder      <- Gen.alphaNumericString
-  } yield firstCharacter + remainder
+  } yield "" + firstCharacter + remainder
 
   override def spec: ZSpec[Environment, Failure] = suite("BotShellEvaluator")(
     parserTests,

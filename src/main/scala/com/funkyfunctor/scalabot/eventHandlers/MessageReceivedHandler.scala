@@ -1,24 +1,49 @@
 package com.funkyfunctor.scalabot.eventHandlers
 
+import com.funkyfunctor.scalabot.Main.{ScalaBotContext, ScalabotEnvironment}
+import com.funkyfunctor.scalabot.MessageReceivedException
 import com.funkyfunctor.scalabot.commands.{Command, CommandContext}
+import com.funkyfunctor.scalabot.utils.ZioUtils
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
+import zio._
+import zio.logging._
 
 import scala.jdk.javaapi.CollectionConverters
 
-object MessageReceivedHandler
-    extends EventHandler[ChannelMessageEvent]({ event =>
-      val permissions = CollectionConverters.asScala(event.getPermissions)
-      // event.
-      val user      = event.getUser.getName
-      val msg       = event.getMessage
-      val timestamp = System.currentTimeMillis()
+object MessageReceivedHandler {
+  def eventHandler: ZioEventHandler[ChannelMessageEvent] = {
+    val effect: ChannelMessageEvent => URIO[ScalaBotContext, Unit] = { (event: ChannelMessageEvent) =>
+      {
+        val result = for {
+          msg        <- getMessageInformation(event)
+          msgContext <- getMessageContext(event)
+          command    <- Command.toCommand(msg, msgContext)
+          result     <- command.run()
+        } yield result
 
-      System.out.println(s"$timestamp - [$user ($permissions) says] '$msg'")
+        ZioUtils.processZio(result, "An error was encountered while processing a ChannelMessageEvent")
+      }
+    }
+    new ZioEventHandler[ChannelMessageEvent](effect)
+  }
 
-      val commandContext = Map(
-        CommandContext.CHANNEL_KEY     -> event.getChannel.getName,
-        CommandContext.CHAT_CLIENT_KEY -> event.getTwitchChat
-      )
+  def getMessageInformation(event: ChannelMessageEvent): ScalabotEnvironment[String] = {
+    for {
+      permissions <- ZIO(CollectionConverters.asScala(event.getPermissions))
+      user        <- ZIO(event.getUser.getName)
+      msg         <- ZIO(event.getMessage)
+      timestamp   <- clock.nanoTime
+      _           <- log.info(s"$timestamp - [$user ($permissions) says] '$msg'")
+    } yield msg
+  }.mapError(MessageReceivedException)
 
-      Command.toCommand(msg, commandContext).foreach(command => command.run())
-    })
+  def getMessageContext(event: ChannelMessageEvent): ScalabotEnvironment[Map[String, Object]] = {
+    for {
+      channelName <- ZIO(event.getChannel.getName)
+      chatClient  <- ZIO(event.getTwitchChat)
+    } yield Map(
+      CommandContext.CHANNEL_KEY     -> channelName,
+      CommandContext.CHAT_CLIENT_KEY -> chatClient
+    )
+  }.mapError(MessageReceivedException)
+}
