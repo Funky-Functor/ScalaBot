@@ -5,7 +5,11 @@ import com.funkyfunctor.scalabot.MessageReceivedException
 import zio.ZIO
 import zio.logging.log
 
+import scala.annotation.tailrec
+
 object Command {
+  val COMMAND_MARKER = "!"
+
   private val commandsMap: Map[String, CommandConstructor] = Map(
     PingConstructor.getTuple,
     EvalConstructor.getTuple
@@ -15,16 +19,35 @@ object Command {
     override def run(): ScalabotEnvironment[Unit] = ZIO.unit
   }
 
+  def toCommandSeq(commandString: String): Seq[String] = {
+    val tokens = commandString.split("""\s""").toSeq
+
+    toCommandSeq(tokens)
+  }
+
+  @tailrec
+  private def toCommandSeq(tokens: Seq[String]): Seq[String] = {
+    if (tokens.isEmpty)
+      Nil
+    else {
+      if (tokens.head.startsWith(COMMAND_MARKER))
+        tokens
+      else toCommandSeq(tokens.tail)
+    }
+  }
+
   def toCommand(
       commandString: String,
       context: Map[String, Object]
-  ): ScalabotEnvironment[Command] =
-    if (!commandString.startsWith("!"))
+  ): ScalabotEnvironment[Command] = {
+    val commandTokens = toCommandSeq(commandString)
+
+    if (commandTokens.isEmpty)
       ZIO.succeed(DoNothingCommand)
     else {
       for {
         // "!ff_ping     test" => Seq("!ff_ping", "test")
-        splitString    <- ZIO(commandString.split("""\s""").toIndexedSeq)
+        splitString    <- ZIO(commandTokens)
         constructorOpt <- ZIO(commandsMap.get(splitString.head))
         constructor <- ZIO
           .fromOption(constructorOpt)
@@ -43,6 +66,7 @@ object Command {
     }.flatMapError { exc =>
       log.debug("Transforming exception to a MessageReceivedException").as(MessageReceivedException(exc))
     }
+  }
 }
 
 trait CommandConstructor { self =>
