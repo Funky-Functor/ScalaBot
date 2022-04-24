@@ -7,7 +7,7 @@ import com.github.twitch4j.chat.TwitchChat
 import zio.ZIO
 
 object PingConstructor extends CommandConstructor {
-  override def commandKey: String = "!ff_ping"
+  override val commandKey: String = "ff_ping"
 
   override def getCommand(command: String, context: CommandContext): ScalabotEnvironment[Command] = {
     for {

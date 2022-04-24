@@ -8,7 +8,7 @@ import zio.ZIO
 import zio.logging.log
 
 object EvalConstructor extends CommandConstructor {
-  override val commandKey: String = "!eval"
+  override val commandKey: String = "eval"
 
   override def getCommand(commandArguments: String, context: CommandContext): ScalabotEnvironment[Command] = {
     for {

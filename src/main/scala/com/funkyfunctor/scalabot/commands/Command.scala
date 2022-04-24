@@ -12,7 +12,7 @@ object Command {
 
   private val commandsMap: Map[String, CommandConstructor] = Map(
     PingConstructor.getTuple,
-    EvalConstructor.getTuple
+    //EvalConstructor.getTuple
   )
 
   object DoNothingCommand extends Command {
@@ -73,18 +73,20 @@ trait CommandConstructor { self =>
   def commandKey: String
   def getCommand(command: String, context: CommandContext): ScalabotEnvironment[Command]
 
+  protected def commandKeyWithMarker: String = Command.COMMAND_MARKER + commandKey.trim
+
   def getCommandString(command: String): String = {
-    if (!command.contains(commandKey)) {
+    if (!command.contains(commandKeyWithMarker)) {
       command
     } else {
-      if (command.startsWith(commandKey))
-        command.substring(commandKey.length).trim
+      if (command.startsWith(commandKeyWithMarker))
+        command.substring(commandKeyWithMarker.length).trim
       else
         getCommandString(command.substring(1))
     }
   }
 
-  def getTuple: (String, CommandConstructor) = commandKey -> self
+  def getTuple: (String, CommandConstructor) = commandKeyWithMarker -> self
 }
 
 trait Command {
