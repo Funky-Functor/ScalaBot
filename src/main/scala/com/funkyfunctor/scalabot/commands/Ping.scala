@@ -1,23 +1,25 @@
 package com.funkyfunctor.scalabot.commands
 
+import com.funkyfunctor.scalabot.Main.{ScalaBotContext, ScalabotEnvironment}
+import com.funkyfunctor.scalabot.MessageReceivedException
+import com.funkyfunctor.scalabot.utils.ZioUtils
 import com.github.twitch4j.chat.TwitchChat
-
-import scala.util.Try
+import zio.ZIO
 
 object PingConstructor extends CommandConstructor {
   override def commandKey: String = "!ff_ping"
 
-  override def getCommand(commandArguments: Seq[String], context: Map[String, Object]): Option[Command] =
+  override def getCommand(command: String, context: CommandContext): ScalabotEnvironment[Command] = {
     for {
-      chatObject <- context.get(CommandContext.CHAT_CLIENT_KEY)
-      chat <- Try {
-        chatObject.asInstanceOf[TwitchChat]
-      }.toOption
-      channelObject <- context.get(CommandContext.CHANNEL_KEY)
-      channel = channelObject.toString
+      chat    <- context.getElement[TwitchChat](CommandContext.CHAT_CLIENT_KEY)
+      channel <- context.getElement[String](CommandContext.CHANNEL_KEY)
     } yield new PingCommand(chat, channel)
+  }.mapError(MessageReceivedException)
 }
 
 class PingCommand(twitchChat: TwitchChat, channel: String) extends Command {
-  override def run(): Unit = twitchChat.sendMessage(channel, "PONG !!!")
+  override def run(): ZIO[ScalaBotContext, Nothing, Unit] = {
+    val zio = ZIO(twitchChat.sendMessage(channel, "PONG !!!"))
+    ZioUtils.processZio(zio, "Unexpected error while processing the ping command")
+  }
 }

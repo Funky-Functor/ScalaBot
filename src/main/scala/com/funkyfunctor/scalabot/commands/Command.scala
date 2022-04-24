@@ -1,34 +1,68 @@
 package com.funkyfunctor.scalabot.commands
 
+import com.funkyfunctor.scalabot.Main.ScalabotEnvironment
+import com.funkyfunctor.scalabot.MessageReceivedException
+import zio.ZIO
+import zio.logging.log
+
 object Command {
   private val commandsMap: Map[String, CommandConstructor] = Map(
-    PingConstructor.getTuple
+    PingConstructor.getTuple,
+    EvalConstructor.getTuple
   )
+
+  object DoNothingCommand extends Command {
+    override def run(): ScalabotEnvironment[Unit] = ZIO.unit
+  }
 
   def toCommand(
       commandString: String,
       context: Map[String, Object]
-  ): Option[Command] =
+  ): ScalabotEnvironment[Command] =
     if (!commandString.startsWith("!"))
-      None
+      ZIO.succeed(DoNothingCommand)
     else {
-      // "!ff_ping     test" => Seq("!ff_ping", "test")
-      val splitString: Seq[String] = commandString.split("""\s""").toIndexedSeq
-
       for {
-        constructor <- commandsMap.get(splitString.head)
-        command     <- constructor.getCommand(splitString.tail, context)
+        // "!ff_ping     test" => Seq("!ff_ping", "test")
+        splitString    <- ZIO(commandString.split("""\s""").toIndexedSeq)
+        constructorOpt <- ZIO(commandsMap.get(splitString.head))
+        constructor <- ZIO
+          .fromOption(constructorOpt)
+          .orElseFail(new Exception(s"Command constructor not found for '${splitString.head}'"))
+        command <- constructor
+          .getCommand(commandString, CommandContext(envVariables = context))
+          .flatMapError { _ =>
+            val msg = s"Impossible to create a command for '$commandString'"
+            log.error(msg) *>
+              log
+                .info(s"Error details - command: '$commandString' - splitString: '$splitString'")
+                .as(new Exception(msg))
+          }
+        _ <- log.debug(s"Retrieved command '$command'")
       } yield command
+    }.flatMapError { exc =>
+      log.debug("Transforming exception to a MessageReceivedException").as(MessageReceivedException(exc))
     }
 }
 
 trait CommandConstructor { self =>
   def commandKey: String
-  def getCommand(commandArguments: Seq[String], context: Map[String, Object]): Option[Command]
+  def getCommand(command: String, context: CommandContext): ScalabotEnvironment[Command]
+
+  def getCommandString(command: String): String = {
+    if (!command.contains(commandKey)) {
+      command
+    } else {
+      if (command.startsWith(commandKey))
+        command.substring(commandKey.length).trim
+      else
+        getCommandString(command.substring(1))
+    }
+  }
 
   def getTuple: (String, CommandConstructor) = commandKey -> self
 }
 
 trait Command {
-  def run(): Unit
+  def run(): ScalabotEnvironment[Unit]
 }

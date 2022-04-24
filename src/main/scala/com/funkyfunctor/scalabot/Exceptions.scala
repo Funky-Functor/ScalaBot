@@ -11,3 +11,6 @@ case class EventHandlerRegisteringException(innerException: Throwable)
     extends ScalaBotException("An error has occurred while trying to register an event handler", innerException)
 case class ChatException(innerException: Throwable)
     extends ScalaBotException("An error has occurred while accessing the chat", innerException)
+
+case class MessageReceivedException(innerException: Throwable)
+  extends ScalaBotException("An error has occurred while processing a received message", innerException)
